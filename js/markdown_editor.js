@@ -1,5 +1,7 @@
 /**
- * Created by GNPLX on 2018/7/14.
+ * Markdown Editor for Hello-Markdown
+ * Author: N2ET
+ * Author URI: http://www.busyscript.com
  */
 
 (function($) {
@@ -46,6 +48,7 @@
             this.$preview.get(0).innerHTML = marked(
                 this.$editor.val()
             );
+            doHighlight(this.$preview);
         }
     });
 
@@ -114,9 +117,8 @@
     }
 
     function doHighlight($container) {
-        $container = $container || $('pre code');
-
-        $container.each(function() {
+        $container = $container || $('body');
+        $container.find('pre code').each(function() {
             var el = this;
             hljs.highlightBlock(el);
         });

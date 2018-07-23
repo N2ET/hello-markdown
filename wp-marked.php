@@ -51,13 +51,14 @@ class HelloMarkdown {
         wp_register_script(self::key('js_markdown_lib'), $plugin_dir . 'js/marked.js', array(), self::$version);
 
         wp_register_script(self::key('js_highlight'), $plugin_dir . 'js/highlight/highlight.pack.js', array(), self::$version);
-        wp_register_style(self::key('css_highlight'), $plugin_dir . 'js/highlight/styles/default.css', array(), self::$version);
+        wp_register_style(self::key('css_highlight'), $plugin_dir . 'js/highlight/styles/github.css', array(), self::$version);
 
         wp_register_style(self::key('css_markdown_editor'), $plugin_dir . 'css/markdown_editor.css', array(), self::$version);
     }
 
     // enqueue all needed static files
     public function enqueue_static_res() {
+        wp_enqueue_script(array('jquery'));
         wp_enqueue_script(self::key('js_markdown_lib'), array('jquery'));
         wp_enqueue_script(self::key('js_markdown_editor'), array('jquery'));
         wp_enqueue_style(self::key('css_markdown_editor'));
