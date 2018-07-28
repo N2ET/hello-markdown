@@ -3,3 +3,8 @@
     padding: 10px;
     background-color: #fff;
 }
+
+.markdown-editor-preview_frame {
+    border: 0;
+    width: 100%;
+}

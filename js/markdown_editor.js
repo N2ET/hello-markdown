@@ -6,6 +6,90 @@
 
 (function($) {
 
+    var markdownConfig = helloMarkdownConfig || {
+        res: {
+
+        }
+     };
+
+    function Preview(options) {
+        this.options = $.extend({
+            type: 'frame'
+        }, options);
+
+        this._init();
+    }
+
+    $.extend(Preview.prototype, {
+        _init: function() {
+            this._initEl();
+            this._initEvents();
+        },
+
+        _initEvents: function() {
+            this.$el.on('preview-style-loaded', this.updateHeight.bind(this));
+        },
+
+        _initEl: function() {
+            var self = this;
+            this.$el = $('<div class="markdown-editor-preview"></div>');
+            if(this.isEmbedType()) {
+                return;
+            }
+
+            this.$frame = $('<iframe class="markdown-editor-preview_frame"></iframe>');
+            this.$el.append(this.$frame).appendTo(document.body);
+
+            /**
+             * iframe只在插入文档时才有document
+             * 移动iframe会导致，文档重新生成
+             */
+            setTimeout(function() {
+                var $head = $(self.$frame.get(0).contentDocument.head);
+                var $link = $('<link type="text/css" rel="stylesheet" href="' + markdownConfig.res.css_highlight + '" />');
+                $head.append($link);
+                $link.on('load', function() {
+                    self.$el.trigger('preview-style-loaded');
+                });
+            }, 0);
+
+        },
+
+        isEmbedType: function () {
+            return this.options.type !== 'frame';
+        },
+
+        getEl: function () {
+            return this.$el;
+        },
+
+        update: function(text, notUpdateHeight) {
+            var markdown = marked(text);
+            var $container = this.$el;
+            if(!this.isEmbedType()) {
+                $container = $(this.$frame.get(0).contentDocument.body);
+            }
+
+            $container.get(0).innerHTML = markdown;
+            doHighlight($container);
+
+            if(!notUpdateHeight) {
+                this.updateHeight();
+            }
+        },
+
+        updateHeight: function() {
+            if(this.isEmbedType()) {
+                return;
+            }
+
+            this.$frame.innerHeight(
+                this.$frame.get(0).contentDocument.body.scrollHeight
+            );
+        }
+    });
+
+
     function MarkdownEditor(options) {
         this.options = $.extend({
             updateDelayTime: 50
@@ -17,7 +101,7 @@
     $.extend(MarkdownEditor.prototype, {
         _init: function() {
             this.$editor = this.options.$editor;
-            this.$preview = this.options.$preview;
+            this.preview = this.options.preview;
 
             this._initEvents();
 
@@ -45,48 +129,48 @@
         },
 
         _updatePreview: function() {
-            this.$preview.get(0).innerHTML = marked(
+            this.preview.update(
                 this.$editor.val()
             );
-            doHighlight(this.$preview);
         }
     });
-
-    function getPreviewEl() {
-        return $('<div class="markdown-editor-preview"></div>');
-    }
 
     var editorConfig = {
         post: function () {
             var $editor = $('#content'),
-                $preview;
+                preview;
 
             if(!$editor.size()) {
                 return;
             }
 
-            $preview = getPreviewEl();
-            $('#wp-content-editor-container').after($preview);
+            preview = new Preview();
+
+            $('#wp-content-editor-container').after(
+                preview.getEl()
+            );
             return {
                 $editor: $editor,
-                $preview: $preview
+                preview: preview
             };
         },
 
         comment: function() {
             var $editor = $('#comment'),
-                $preview;
+                preview;
 
             if(!$editor.size()) {
                 return;
             }
 
-            $preview = getPreviewEl();
-            $editor.closest('.comment-form-comment').after($preview);
+            preview = new Preview();
+            $editor.closest('.comment-form-comment').after(
+                preview.getEl()
+            );
 
             return {
                 $editor: $editor,
-                $preview: $preview
+                preview: preview
             };
         }
     };
