@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Hello-Markdown
  * Description: Blogging with markdown, edit and preview in the real time! Hello-Markdown store raw markdown text in database!
- * Version: 1.0.0
+ * Version: 1.0.1
  * Author: N2ET
  * Author URI: http://www.busyscript.com
  */
@@ -16,6 +16,8 @@ class HelloMarkdown {
     public static $options = array(
         'post_types' => array()
     );
+
+    public static $static_res = array();
 
     public static $comment_type = 'comment';
 
@@ -47,13 +49,23 @@ class HelloMarkdown {
     public static function register_static_res() {
         $plugin_dir = plugin_dir_url(__FILE__);
 
-        wp_register_script(self::key('js_markdown_editor'), $plugin_dir . 'js/markdown_editor.js', array(), self::$version);
-        wp_register_script(self::key('js_markdown_lib'), $plugin_dir . 'js/marked.js', array(), self::$version);
+        self::register_script(self::key('js_markdown_editor'), $plugin_dir . 'js/markdown_editor.js', array(), self::$version);
+        self::register_script(self::key('js_markdown_lib'), $plugin_dir . 'js/marked.js', array(), self::$version);
 
-        wp_register_script(self::key('js_highlight'), $plugin_dir . 'js/highlight/highlight.pack.js', array(), self::$version);
-        wp_register_style(self::key('css_highlight'), $plugin_dir . 'js/highlight/styles/github.css', array(), self::$version);
+        self::register_script(self::key('js_highlight'), $plugin_dir . 'js/highlight/highlight.pack.js', array(), self::$version);
+        self::register_style(self::key('css_highlight'), $plugin_dir . 'js/highlight/styles/github.css', array(), self::$version);
 
-        wp_register_style(self::key('css_markdown_editor'), $plugin_dir . 'css/markdown_editor.css', array(), self::$version);
+        self::register_style(self::key('css_markdown_editor'), $plugin_dir . 'css/markdown_editor.css', array(), self::$version);
+    }
+
+    public static function register_script($handle, $src, $deps, $ver) {
+        self::$static_res[$handle] = $src;
+        return wp_register_script($handle, $src, $deps, $ver);
+    }
+
+    public static function register_style($handle, $src, $deps, $ver) {
+        self::$static_res[$handle] = $src;
+        return wp_register_style($handle, $src, $deps, $ver);
     }
 
     // enqueue all needed static files
@@ -65,6 +77,21 @@ class HelloMarkdown {
 
         wp_enqueue_script(self::key('js_highlight'), array('jquery'));
         wp_enqueue_style(self::key('css_highlight'));
+
+        $this->enqueue_markdown_config(self::key('js_markdown_editor'));
+    }
+
+    public function enqueue_markdown_config($js_editor_id) {
+        $css_highlight = self::$static_res[self::key('css_highlight')];
+        $script = <<<END
+var helloMarkdownConfig = {
+    res: {
+        'css_highlight': '{$css_highlight}' 
+    }
+};
+END;
+
+        wp_add_inline_script($js_editor_id, $script, 'before');
     }
 
     public function init() {
