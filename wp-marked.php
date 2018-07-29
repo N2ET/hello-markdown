@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Hello-Markdown
  * Description: Blogging with markdown, edit and preview in the real time! Hello-Markdown store raw markdown text in database!
- * Version: 1.0.1
+ * Version: 1.0.2
  * Author: N2ET
  * Author URI: http://www.busyscript.com
  */
@@ -11,7 +11,7 @@ class HelloMarkdown {
 
     public static $domain = 'hello_markdown';
 
-    public static $version = '1.0.0';
+    public static $version = '1.0.2';
 
     public static $options = array(
         'post_types' => array()
@@ -164,7 +164,7 @@ END;
     }
 
     /**
-     * ；Determine whether markdown is enabled，only objects created by Hello_Markdown will be parsed
+     * determine whether markdown is enabled，only objects created by Hello_Markdown will be parsed
      * @param string $id_or_type  Type
      * @param string $id          ID
      * @return bool|mixed         Is markdown enabled
@@ -182,6 +182,11 @@ END;
 
         if(!$post_type_markdown_enable || empty($id)) {
             return $post_type_markdown_enable;
+        }
+
+        // get metadata for page should use type 'post'
+        if($type !== 'post' && $type !== 'comment') {
+            $type = 'post';
         }
 
         $post_type_markdown_enable = get_metadata($type, $id, '_' . self::key(), true);
@@ -214,7 +219,9 @@ END;
     public function markdown_post_content($content) {
         $post = get_post();
         if($this->is_markdown_enable($post->post_type, get_the_ID())) {
-            return '<div class="markdown-view post" style="display: none">' . $post->post_content . '</div>';
+            $content = $post->post_content;
+            $content = apply_filters('hello_markdown_the_content', $content, $post);
+            return '<div class="markdown-view post" style="display: none">' . $content . '</div>';
         }
 
         return $content;
@@ -230,7 +237,12 @@ END;
 
     public function markdown_comment_content($content, $comment) {
         if($this->is_markdown_enable(self::$comment_type, get_comment_ID())) {
-            return '<div class="markdown-view comment" style="display: none">' . $comment->comment_content . '</div>';
+            $content = $comment->comment_content;
+            $content = apply_filters('hello_markdown_comment_text', $content, $comment);
+
+            return '<div class="markdown-view comment" style="display: none">' .
+                wp_kses($content, array()) .
+                '</div>';
         }
 
         return $content;
