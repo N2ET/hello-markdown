@@ -137,7 +137,7 @@
 
     var editorConfig = {
         post: function () {
-            var $editor = $('#content'),
+            var $editor = $('#postdivrich #content'),
                 preview;
 
             if(!$editor.size()) {
